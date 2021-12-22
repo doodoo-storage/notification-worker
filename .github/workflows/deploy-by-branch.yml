@@ -1,0 +1,45 @@
+name: deploy-by-branch
+
+on:
+  push:
+    branches: [ your-branch-name ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Cache node modules
+      uses: actions/cache@v2
+      env:
+        cache-name: cache-node-modules
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-build-${{ env.cache-name }}-
+          ${{ runner.os }}-build-
+          ${{ runner.os }}-
+    - name: Install NPM dependencies (root)
+      run: npm install
+    - name: Build source code
+      run: npm run build
+    - name: Archive files for deploy
+      run: npm run zip
+    - name: Generate version-id
+      id: generate-uuid
+      uses: filipstefansson/uuid-action@v1
+
+    - name: Deploy to ElasticBeanstalk for prod
+      uses: einaregilsson/beanstalk-deploy@v10
+      with:
+        aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        application_name: your-application-name
+        environment_name: your-environment-name
+        region: ap-northeast-2
+        deployment_package: application.zip
+        version_label: ${{ steps.generate-uuid.outputs.uuid }}
+        version_description: ${{ github.SHA }}
+        wait_for_environment_recovery: 300
