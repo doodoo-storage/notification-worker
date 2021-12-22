@@ -1,7 +1,7 @@
 # alike-server-notification-worker
 
 ## project description
-알림 전송을 위한 worker. 현재는 push 전송에 대한 flow가 구현되어있다.
+알림 전송을 위한 worker.
 
 ## project tree
 ```
